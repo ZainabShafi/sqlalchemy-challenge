@@ -49,9 +49,9 @@ def welcome():
         f"/api/v1.0/stations<br /> A list of weather stations and names<br/><br/>"
         f"/api/v1.0/tobs<br /> A list of temp observations from the most active station (2016-2017)<br/><br/>"
         f"<p> For the following app routes, specify date in MM-DD-YYYY format:<br/><br/>"
-        f"/api/v1.0/start/<start_date><br /> A list of min, max and avg temps between a given start date and 8/23/17 <br /><br/>"
+        f"/api/v1.0/temp/start/<start_date><br /> A list of min, max and avg temps between a given start date and 8/23/17 <br /><br/>"
         f"<p>For route below separate each date with a / :<br/><br/>"
-        f"/api/v1.0/start_end/<start>/<end> <br /> A list of min, max and avg temps between a given start and end date <br /><br/>"
+        f"/api/v1.0/temp/start/end/<start>/<end> <br /> A list of min, max and avg temps between a given start and end date <br /><br/>"
         
     )
 
@@ -63,14 +63,12 @@ def precipitation():
     data = session.query(Measurement.date, Measurement.prcp).filter(Measurement.date >= year_b4).all()
     session.close()
 
-    weather_data = []
+    weather_dict = {}
     for date, prcp in data:
-        weather_dict = {}
-        weather_dict["date"] = date 
-        weather_dict["prcp"] = prcp
-        weather_data.append(weather_dict)
+        weather_dict[date] = {"prcp":prcp}
+         
 
-    return jsonify(weather_data)
+    return jsonify(weather_dict)
 
 #Return a JSON list of stations from the dataset:
 
@@ -94,11 +92,11 @@ def tobs():
         filter(Measurement.date >= year_b4).all()
     
     all_temps = list(np.ravel(temps))
-    return jsonify(all_temps)
+    return jsonify("temperatures",all_temps)
 
 
 #For a specified start, calculate TMIN, TAVG, TMAX for all the dates greater than or equal to the start date:
-@app.route("/api/v1.0/start/<start_date>")
+@app.route("/api/v1.0/temp/start/<start_date>")
 #start_date is a dynamic parameter:
 def start(start_date):
     sel = [func.min(Measurement.tobs), func.max(Measurement.tobs), func.avg(Measurement.tobs)]
@@ -118,7 +116,7 @@ def start(start_date):
     return jsonify(spec_start_temps)
 
 #For a specified start date and end date, calculate TMIN, TAVG, and TMAX:
-@app.route("/api/v1.0/start_end/<start>/<end>")
+@app.route("/api/v1.0/temp/start/end/<start>/<end>")
 #start, end are dynamic parameters:
 def start_end(start,end):
     sel = [func.min(Measurement.tobs), func.max(Measurement.tobs), func.avg(Measurement.tobs)]
